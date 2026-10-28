@@ -42,6 +42,16 @@ Exit code: `0` no new breakages, `1` breakages (or warnings with `--strict`), `2
 
 Run `node dist/cli.js --help` for all options. You can also put options in a JSON file and pass `--config pr-verify.config.json` (see [examples/pr-verify.config.json](examples/pr-verify.config.json)). Flags win over the file.
 
+### Claude review
+
+Set `ANTHROPIC_API_KEY` and Claude looks at the base, preview and diff screenshots of the pages that changed (up to 4, failing pages first). It adds a short review at the top of the PR comment:
+
+- a verdict: looks intended, needs a human look, or looks broken
+- one line per changed page, with a risk level
+- what a reviewer should check by hand
+
+It uses `claude-opus-5-5` by default (`--ai-model` to change it) with server-side fallbacks on. If the call fails, the report still goes out without it. `--no-ai` turns it off.
+
 ### Protected Vercel previews
 
 If your previews use Vercel Deployment Protection, create a "Protection Bypass for Automation" secret in Vercel and set `VERCEL_AUTOMATION_BYPASS_SECRET`. It is sent only to the preview.
@@ -52,6 +62,7 @@ Vercel sends a `deployment_status` event when a preview is ready. Copy [examples
 
 - repo variable `PR_VERIFY_BASE_URL`: your production URL
 - secret `VERCEL_AUTOMATION_BYPASS_SECRET` (only if previews are protected)
+- secret `ANTHROPIC_API_KEY` (optional, for the Claude review)
 
 The action runs the checks, uploads screenshots as a build artifact, and creates or updates a single PR comment.
 
@@ -72,11 +83,11 @@ Code layout:
 - `src/compare.ts`: decides which issues are new in the preview
 - `src/verify.ts`: runs base and preview side by side for each route and viewport
 - `src/report.ts`: Markdown PR comment and JSON report
+- `src/summarize.ts`: Claude review of the screenshots
 - `src/cli.ts`: CLI entry point
 
 ## Roadmap
 
-- Claude explains the diff images in plain words and flags what looks like a bug
 - Auto-find routes from the Next.js `app/` folder, and only check routes the PR touched
 - Login support (storage state)
 - Hosted GitHub App and a Next.js dashboard of past runs

@@ -35,6 +35,14 @@ inputs:
     description: Vercel "Protection Bypass for Automation" secret, if previews are protected
     required: false
     default: ''
+  anthropic-api-key:
+    description: Claude API key. When set, Claude reviews the screenshots and writes a short summary in the comment.
+    required: false
+    default: ''
+  ai-model:
+    description: Claude model for the review
+    required: false
+    default: ''
   github-token:
     description: Token used to post the comment
     required: false
@@ -73,6 +81,8 @@ runs:
         CONFIG: ${{ inputs.config }}
         STRICT: ${{ inputs.strict }}
         VERCEL_AUTOMATION_BYPASS_SECRET: ${{ inputs.vercel-bypass-secret }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        AI_MODEL: ${{ inputs.ai-model }}
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         CLI: ${{ github.action_path }}/dist/cli.js
       run: |
@@ -81,6 +91,7 @@ runs:
         # A config file can hold the routes, so only pass --routes when there is no config.
         if [ -n "$CONFIG" ]; then args+=(--config "$CONFIG"); else args+=(--routes "$ROUTES"); fi
         if [ "$STRICT" = "true" ]; then args+=(--strict); fi
+        if [ -n "$AI_MODEL" ]; then args+=(--ai-model "$AI_MODEL"); fi
         set +e
         node "$CLI" "${args[@]}"
         code=$?
