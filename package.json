@@ -1,0 +1,35 @@
+{
+  "name": "pr-verify",
+  "version": "0.1.0",
+  "description": "PreviewPilot: open preview and production side by side in Playwright, find UI that broke, and report it on the PR.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "pr-verify": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "verify": "tsx src/cli.ts",
+    "test:unit": "node --import tsx --test test/compare.test.ts test/config.test.ts test/diff.test.ts test/report.test.ts",
+    "test:e2e": "node --import tsx --test test/verify.e2e.test.ts"
+  },
+  "dependencies": {
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.63.0",
+    "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/pngjs": "^6.0.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
