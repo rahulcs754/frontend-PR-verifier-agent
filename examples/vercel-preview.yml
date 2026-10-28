@@ -1,0 +1,30 @@
+# Copy to .github/workflows/pr-verify.yml in your Next.js app repo.
+# Vercel's GitHub integration sends a deployment_status event when a preview is ready.
+name: PreviewPilot
+
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+  pull-requests: write
+  deployments: read
+
+jobs:
+  verify:
+    # Only successful Vercel preview deploys.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment == 'Preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha }}
+
+      - uses: rahulcs754/frontend-PR-verifier-agent@main
+        with:
+          base-url: ${{ vars.PR_VERIFY_BASE_URL }} # e.g. https://your-app.com
+          preview-url: ${{ github.event.deployment_status.environment_url }}
+          config: pr-verify.config.json # or: routes: /,/pricing
+          vercel-bypass-secret: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
