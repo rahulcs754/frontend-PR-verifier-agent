@@ -74,6 +74,14 @@ Prefer not to add a workflow to every repo? Run PreviewPilot as a GitHub App. It
 
 `dashboard/` is a Next.js App Router app that lists past runs and shows each one with Claude's review, the issues, and base/preview/diff screenshots side by side. It reads the runs the GitHub App saves. `docker-compose.yml` runs both together. See [dashboard/README.md](dashboard/README.md).
 
+## Dogfooding on this repo
+
+`.github/workflows/preview-pilot.yml` runs PreviewPilot on this repo's own demo app (`examples/demo-app`) every time Vercel reports a ready preview. To turn it on:
+
+1. Create a Vercel project from this repo with root directory `examples/demo-app`, and deploy it to Production once.
+2. Optional secrets: `VERCEL_AUTOMATION_BYPASS_SECRET` (if previews are protected) and `ANTHROPIC_API_KEY` (for the Claude review). Optional variable: `PR_VERIFY_BASE_URL` (otherwise the latest Production deployment is used).
+3. Open a PR that changes the demo app. The workflow comments on it.
+
 ## Development
 
 ```bash
