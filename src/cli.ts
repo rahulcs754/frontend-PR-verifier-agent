@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { buildConfig, ConfigError, parseList, readConfigFile, type FileConfig } from './config.ts';
 import { renderMarkdown, toJson } from './report.ts';
+import { DEFAULT_MODEL, summarizeReport } from './summarize.ts';
 import type { Report, RouteResult } from './types.ts';
 import { verify } from './verify.ts';
 
@@ -24,10 +25,13 @@ Options:
   --timeout <ms>           Page load timeout (default: 30000)
   --artifact-url <url>     Link to screenshots, shown in the PR comment
   --strict                 Exit 1 on warnings too
+  --no-ai                  Skip the Claude review even if ANTHROPIC_API_KEY is set
+  --ai-model <id>          Claude model for the review (default: ${DEFAULT_MODEL})
   -h, --help               Show this help
 
 Env:
   VERCEL_AUTOMATION_BYPASS_SECRET   Sent to the preview only, to pass Vercel Deployment Protection
+  ANTHROPIC_API_KEY                 Turns on Claude's plain-English review of the screenshots
 
 Exit codes: 0 no new breakages, 1 breakages (or warnings with --strict), 2 bad input or crash.`;
 
@@ -46,6 +50,8 @@ async function main(argv: string[]): Promise<number> {
       timeout: { type: 'string' },
       'artifact-url': { type: 'string' },
       strict: { type: 'boolean' },
+      'no-ai': { type: 'boolean' },
+      'ai-model': { type: 'string' },
       help: { type: 'boolean', short: 'h' },
     },
     strict: true,
@@ -76,6 +82,9 @@ async function main(argv: string[]): Promise<number> {
   console.log(`Checking ${config.routes.length} route(s) x ${config.viewports.length} viewport(s)...\n`);
 
   const report = await verify(config, { onResult: printResult });
+  if (!values['no-ai'] && process.env.ANTHROPIC_API_KEY) {
+    report.ai = await reviewWithClaude(report, values['ai-model']);
+  }
 
   const outDir = resolve(config.outDir);
   await writeFile(join(outDir, 'report.md'), renderMarkdown(report, { artifactUrl: values['artifact-url'] }));
@@ -84,6 +93,19 @@ async function main(argv: string[]): Promise<number> {
   printSummary(report, outDir);
   const failed = report.summary.status === 'fail' || (config.strict && report.summary.status === 'warn');
   return failed ? 1 : 0;
+}
+
+/** The Claude review is a bonus: if it fails, the report still goes out. */
+async function reviewWithClaude(report: Report, model: string | undefined) {
+  console.log('\nAsking Claude to review the screenshots...');
+  try {
+    const ai = await summarizeReport(report, { model });
+    console.log(ai ? `Claude: ${ai.verdict}. ${ai.summary}` : 'Claude: nothing to review.');
+    return ai;
+  } catch (err) {
+    console.warn(`Claude review skipped: ${err instanceof Error ? err.message : String(err)}`);
+    return undefined;
+  }
 }
 
 function bypassHeaders(fromFile: Record<string, string> | undefined): Record<string, string> | undefined {
