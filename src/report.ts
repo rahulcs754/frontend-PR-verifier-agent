@@ -1,4 +1,5 @@
-import { basename } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 import { formatMs, formatPercent } from './compare.ts';
 import type { AiChange, AiSummary, Issue, Report, RouteResult, Status } from './types.ts';
 
@@ -60,6 +61,14 @@ export function renderMarkdown(report: Report, opts: MarkdownOptions = {}): stri
   lines.push(`<sub>${footer.join(' · ')}</sub>`);
 
   return lines.join('\n') + '\n';
+}
+
+/** Writes report.md and report.json next to the images. */
+export async function writeReportFiles(report: Report, outDir: string, opts: MarkdownOptions = {}): Promise<string> {
+  const markdown = renderMarkdown(report, opts);
+  await writeFile(join(outDir, 'report.md'), markdown);
+  await writeFile(join(outDir, 'report.json'), toJson(report));
+  return markdown;
 }
 
 /** report.json without absolute local paths, so it is safe to upload and share. */

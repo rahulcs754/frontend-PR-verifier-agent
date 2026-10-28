@@ -1,0 +1,18 @@
+# GitHub App manifest for PreviewPilot.
+# Create the app from it: https://docs.github.com/en/apps/sharing-github-apps/registering-a-github-app-from-a-manifest
+name: PreviewPilot
+description: Opens your Vercel preview and production side by side in a real browser and comments on the PR with what broke.
+url: https://github.com/rahulcs754/frontend-PR-verifier-agent
+hook_attributes:
+  url: https://your-server.example.com/api/github/webhooks
+public: false
+default_permissions:
+  checks: write          # the PreviewPilot check run
+  contents: read         # .github/pr-verify.json
+  deployments: read      # preview URL and production URL
+  pull_requests: write   # the PR comment and changed files
+  issues: write          # PR comments use the issues API
+  metadata: read
+default_events:
+  - pull_request
+  - deployment_status
