@@ -70,12 +70,17 @@ The action runs the checks, uploads screenshots as a build artifact, and creates
 
 Prefer not to add a workflow to every repo? Run PreviewPilot as a GitHub App. It listens for PR and Vercel deployment events, checks the configured routes plus the pages the PR changed, posts the comment, and sets a `PreviewPilot` check run. See [docs/github-app.md](docs/github-app.md).
 
+## Dashboard
+
+`dashboard/` is a Next.js App Router app that lists past runs and shows each one with Claude's review, the issues, and base/preview/diff screenshots side by side. It reads the runs the GitHub App saves. `docker-compose.yml` runs both together. See [dashboard/README.md](dashboard/README.md).
+
 ## Development
 
 ```bash
 npm test           # unit tests + a real-browser test against local fixture sites
 npm run typecheck
 npm run verify -- --base ... --preview ...   # run from source with tsx
+npm run seed       # save a demo run from the fixtures, for the dashboard
 ```
 
 Code layout:
@@ -95,4 +100,4 @@ Code layout:
 ## Roadmap
 
 - Login support (storage state)
-- Next.js dashboard of past runs
+- Dashboard login and run retention
