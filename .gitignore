@@ -3,5 +3,5 @@ dist/
 pr-verify-report/
 *.log
 .DS_Store
-runs/
+/runs/
 .env
