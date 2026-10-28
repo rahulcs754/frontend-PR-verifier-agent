@@ -1,0 +1,7 @@
+{
+  "routes": ["/", "/pricing", "/blog"],
+  "viewports": ["desktop", "mobile"],
+  "mask": ["[data-testid=current-time]", ".ad-slot"],
+  "ignoreConsole": ["Download the React DevTools"],
+  "diffThreshold": 0.002
+}
