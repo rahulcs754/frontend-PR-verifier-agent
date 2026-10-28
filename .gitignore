@@ -4,3 +4,4 @@ pr-verify-report/
 *.log
 .DS_Store
 runs/
+.env

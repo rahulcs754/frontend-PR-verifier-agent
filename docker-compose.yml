@@ -1,0 +1,24 @@
+# GitHub App + dashboard sharing one runs volume.
+# Put the env vars from docs/github-app.md in a .env file next to this file.
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      RUNS_DIR: /data/runs
+    ports:
+      - '3001:3001'
+    volumes:
+      - runs:/data
+
+  dashboard:
+    build: ./dashboard
+    environment:
+      RUNS_DIR: /data/runs
+    ports:
+      - '3000:3000'
+    volumes:
+      - runs:/data:ro
+
+volumes:
+  runs:

@@ -21,7 +21,8 @@
     "test:unit": "node --import tsx --test test/compare.test.ts test/config.test.ts test/diff.test.ts test/report.test.ts test/summarize.test.ts test/app.test.ts",
     "test:e2e": "node --import tsx --test test/verify.e2e.test.ts",
     "app": "tsx src/app/server.ts",
-    "app:start": "node dist/app/server.js"
+    "app:start": "node dist/app/server.js",
+    "seed": "tsx scripts/seed-demo-run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
