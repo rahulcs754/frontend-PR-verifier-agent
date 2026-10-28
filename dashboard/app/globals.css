@@ -1,0 +1,286 @@
+:root {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --text: #18181b;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --pass: #16a34a;
+  --pass-bg: #dcfce7;
+  --warn: #b45309;
+  --warn-bg: #fef3c7;
+  --fail: #dc2626;
+  --fail-bg: #fee2e2;
+  --info-bg: #e0e7ff;
+  --info: #3730a3;
+  --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b0d;
+    --surface: #17171a;
+    --border: #2a2a2f;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --accent: #60a5fa;
+    --pass: #4ade80;
+    --pass-bg: #14532d55;
+    --warn: #fbbf24;
+    --warn-bg: #78350f55;
+    --fail: #f87171;
+    --fail-bg: #7f1d1d55;
+    --info-bg: #312e8155;
+    --info: #c7d2fe;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+code {
+  font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px 64px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  gap: 12px;
+}
+.brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+}
+.brand span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 8px 0 4px;
+}
+h2 {
+  font-size: 17px;
+  margin: 32px 0 12px;
+}
+.muted {
+  color: var(--muted);
+}
+.small {
+  font-size: 13px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+}
+.stat {
+  padding: 14px 16px;
+}
+.stat b {
+  display: block;
+  font-size: 24px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+}
+.chip[aria-current='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  white-space: nowrap;
+}
+th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 600;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+td.title {
+  white-space: normal;
+  min-width: 220px;
+}
+
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge.pass {
+  background: var(--pass-bg);
+  color: var(--pass);
+}
+.badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.badge.fail {
+  background: var(--fail-bg);
+  color: var(--fail);
+}
+.badge.info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.ai {
+  padding: 16px 20px;
+  margin-top: 20px;
+}
+.ai h2 {
+  margin-top: 0;
+}
+.ai ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.result {
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.result header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.result header .grow {
+  flex: 1;
+}
+.issues {
+  list-style: none;
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.issues li {
+  padding: 4px 0;
+  word-break: break-word;
+}
+.issues .tag {
+  font-weight: 700;
+  margin-right: 6px;
+}
+.issues .fail {
+  color: var(--fail);
+}
+.issues .warn {
+  color: var(--warn);
+}
+
+.shots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+@media (max-width: 760px) {
+  .shots {
+    grid-template-columns: 1fr;
+  }
+}
+.shot figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.shot a {
+  display: block;
+  max-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.shot .none {
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+}

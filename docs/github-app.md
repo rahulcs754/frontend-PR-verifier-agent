@@ -53,7 +53,7 @@ Health check: `GET /healthz`.
 | `GITHUB_PRIVATE_KEY` or `GITHUB_PRIVATE_KEY_PATH` | yes | App private key (PEM, `\n` escapes are fine) |
 | `PORT` | no | Default 3001 |
 | `RUNS_DIR` | no | Where runs are saved. Default `./runs` |
-| `DASHBOARD_URL` | no | Links the check and comment to the dashboard page of the run |
+| `DASHBOARD_URL` | no | Links the check and comment to the dashboard page of the run (see `dashboard/`) |
 | `ANTHROPIC_API_KEY` | no | Turns on the Claude review |
 | `PR_VERIFY_AI_MODEL` | no | Claude model, default `claude-opus-5-5` |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | no | For protected previews; sent only to the preview |
