@@ -1,0 +1,22 @@
+{
+  "name": "preview-pilot-demo-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Small Next.js app deployed on Vercel to test pr-verify against real preview URLs.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.1.10",
+    "react-dom": "19.1.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}
