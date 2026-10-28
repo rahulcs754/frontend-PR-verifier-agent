@@ -66,6 +66,10 @@ Vercel sends a `deployment_status` event when a preview is ready. Copy [examples
 
 The action runs the checks, uploads screenshots as a build artifact, and creates or updates a single PR comment.
 
+## GitHub App
+
+Prefer not to add a workflow to every repo? Run PreviewPilot as a GitHub App. It listens for PR and Vercel deployment events, checks the configured routes plus the pages the PR changed, posts the comment, and sets a `PreviewPilot` check run. See [docs/github-app.md](docs/github-app.md).
+
 ## Development
 
 ```bash
@@ -85,9 +89,10 @@ Code layout:
 - `src/report.ts`: Markdown PR comment and JSON report
 - `src/summarize.ts`: Claude review of the screenshots
 - `src/cli.ts`: CLI entry point
+- `src/store.ts`: saved runs on disk (shared by the app and dashboard)
+- `src/app/`: GitHub App: webhook server, run flow, routes from changed files, GitHub calls
 
 ## Roadmap
 
-- Auto-find routes from the Next.js `app/` folder, and only check routes the PR touched
 - Login support (storage state)
-- Hosted GitHub App and a Next.js dashboard of past runs
+- Next.js dashboard of past runs

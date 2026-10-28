@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-import { writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { buildConfig, ConfigError, parseList, readConfigFile, type FileConfig } from './config.ts';
-import { renderMarkdown, toJson } from './report.ts';
+import { writeReportFiles } from './report.ts';
 import { DEFAULT_MODEL, summarizeReport } from './summarize.ts';
 import type { Report, RouteResult } from './types.ts';
 import { verify } from './verify.ts';
@@ -87,8 +86,7 @@ async function main(argv: string[]): Promise<number> {
   }
 
   const outDir = resolve(config.outDir);
-  await writeFile(join(outDir, 'report.md'), renderMarkdown(report, { artifactUrl: values['artifact-url'] }));
-  await writeFile(join(outDir, 'report.json'), toJson(report));
+  await writeReportFiles(report, outDir, { artifactUrl: values['artifact-url'] });
 
   printSummary(report, outDir);
   const failed = report.summary.status === 'fail' || (config.strict && report.summary.status === 'warn');
