@@ -38,6 +38,22 @@ export function compareCaptures(
     return issues;
   }
 
+  // A preview that lands on another site (usually a login wall such as Vercel
+  // Deployment Protection) can't be compared, and every other issue is noise.
+  const previewLanded = originOf(preview.finalUrl ?? preview.url);
+  const baseLanded = originOf(base.finalUrl ?? base.url);
+  if (previewLanded !== previewOrigin && baseLanded === baseOrigin) {
+    const where = shortUrl(preview.finalUrl!, previewOrigin);
+    issues.push({
+      severity: 'fail',
+      kind: 'redirected',
+      message: /vercel\.com$/.test(new URL(preview.finalUrl!).hostname)
+        ? `Preview redirected to ${where}: it is behind Vercel Deployment Protection. Set VERCEL_AUTOMATION_BYPASS_SECRET.`
+        : `Preview redirected to ${where} (a login page?), so it could not be checked`,
+    });
+    return issues;
+  }
+
   if (preview.status >= 400 && base.status < 400) {
     issues.push({
       severity: 'fail',

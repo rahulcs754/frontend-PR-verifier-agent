@@ -11,6 +11,7 @@ For every route, on desktop (1280x800) and mobile (390x844):
 | Check | Result |
 | --- | --- |
 | Page did not load, or returns 4xx/5xx | ❌ fail |
+| Preview redirects to another site (e.g. a Vercel login wall) | ❌ fail |
 | New JS exceptions | ❌ fail |
 | New broken images | ❌ fail |
 | New failed requests (4xx/5xx/network) on your own domain | ❌ fail |

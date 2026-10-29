@@ -70,6 +70,7 @@ export async function capturePage(browser: Browser, url: string, opts: CaptureOp
     const response = await page.goto(url, { waitUntil: 'load', timeout: opts.timeoutMs });
     result.loadMs = Date.now() - started;
     result.status = response?.status() ?? 0;
+    if (page.url() !== url) result.finalUrl = page.url();
 
     // Network idle is best effort: analytics and websockets may never go idle.
     await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
