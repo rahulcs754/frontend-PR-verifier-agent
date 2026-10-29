@@ -104,6 +104,23 @@ export interface RouteResult {
   status: Status;
 }
 
+export interface AiChange {
+  route: string;
+  viewport: string;
+  description: string;
+  risk: 'low' | 'medium' | 'high';
+}
+
+/** Claude's plain-English read of the screenshots */
+export interface AiSummary {
+  verdict: 'looks-good' | 'needs-review' | 'likely-broken';
+  summary: string;
+  changes: AiChange[];
+  risks: string[];
+  /** Model that wrote it (may be a fallback model) */
+  model: string;
+}
+
 export interface Report {
   base: string;
   preview: string;
@@ -116,4 +133,5 @@ export interface Report {
     warn: number;
     checked: number;
   };
+  ai?: AiSummary;
 }

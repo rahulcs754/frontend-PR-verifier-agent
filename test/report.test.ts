@@ -83,6 +83,24 @@ describe('renderMarkdown', () => {
   });
 });
 
+describe('renderMarkdown with Claude review', () => {
+  it('puts the review above the table', () => {
+    const r = report([result({})], { status: 'pass', fail: 0, warn: 0, checked: 1 });
+    r.ai = {
+      verdict: 'likely-broken',
+      summary: 'The pricing cards overlap on mobile.',
+      changes: [{ route: '/pricing', viewport: 'mobile', description: 'Cards overlap', risk: 'high' }],
+      risks: ['Check the checkout button'],
+      model: 'claude-opus-5-5',
+    };
+    const md = renderMarkdown(r);
+    assert.match(md, /### Claude's review\n\n\*\*🔴 Looks broken\.\*\* The pricing cards overlap on mobile\./);
+    assert.match(md, /- 🔴 `\/pricing` · mobile: Cards overlap/);
+    assert.match(md, /\*\*Check by hand:\*\*\n- Check the checkout button/);
+    assert.ok(md.indexOf("Claude's review") < md.indexOf('| Page |'));
+  });
+});
+
 describe('toJson', () => {
   it('replaces absolute paths with relative ones', () => {
     const json = JSON.parse(toJson(report([result({})], { status: 'pass', fail: 0, warn: 0, checked: 1 })));
