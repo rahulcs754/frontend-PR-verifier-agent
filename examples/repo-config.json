@@ -1,0 +1,9 @@
+{
+  "baseUrl": "https://your-app.com",
+  "routes": ["/", "/pricing", "/blog/hello-world"],
+  "autoRoutes": true,
+  "maxRoutes": 10,
+  "viewports": ["desktop", "mobile"],
+  "mask": ["[data-testid=current-time]"],
+  "ignoreConsole": ["Download the React DevTools"]
+}

@@ -1,6 +1,7 @@
-import { basename } from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 import { formatMs, formatPercent } from './compare.ts';
-import type { Issue, Report, RouteResult, Status } from './types.ts';
+import type { AiChange, AiSummary, Issue, Report, RouteResult, Status } from './types.ts';
 
 /** Hidden marker so the GitHub Action can find and update its own comment. */
 export const COMMENT_MARKER = '<!-- pr-verify-report -->';
@@ -25,6 +26,8 @@ export function renderMarkdown(report: Report, opts: MarkdownOptions = {}): stri
       `on ${summary.checked} page${summary.checked === 1 ? '' : 's'} in ${formatMs(report.durationMs)}.`,
     '',
   );
+
+  if (report.ai) lines.push(...renderAi(report.ai));
 
   lines.push('| Page | Viewport | Result | Visual diff | Load (preview / base) |');
   lines.push('| --- | --- | --- | --- | --- |');
@@ -60,6 +63,14 @@ export function renderMarkdown(report: Report, opts: MarkdownOptions = {}): stri
   return lines.join('\n') + '\n';
 }
 
+/** Writes report.md and report.json next to the images. */
+export async function writeReportFiles(report: Report, outDir: string, opts: MarkdownOptions = {}): Promise<string> {
+  const markdown = renderMarkdown(report, opts);
+  await writeFile(join(outDir, 'report.md'), markdown);
+  await writeFile(join(outDir, 'report.json'), toJson(report));
+  return markdown;
+}
+
 /** report.json without absolute local paths, so it is safe to upload and share. */
 export function toJson(report: Report): string {
   const strip = (p?: string) => (p ? `images/${basename(p)}` : undefined);
@@ -73,6 +84,28 @@ export function toJson(report: Report): string {
     })),
   };
   return JSON.stringify(clean, null, 2) + '\n';
+}
+
+const VERDICT: Record<AiSummary['verdict'], string> = {
+  'looks-good': '🟢 Looks intended',
+  'needs-review': '🟡 Needs a human look',
+  'likely-broken': '🔴 Looks broken',
+};
+const RISK: Record<AiChange['risk'], string> = { low: '🟢', medium: '🟡', high: '🔴' };
+
+function renderAi(ai: AiSummary): string[] {
+  const lines = ['### Claude\'s review', '', `**${VERDICT[ai.verdict]}.** ${escapeMd(ai.summary)}`, ''];
+  for (const c of ai.changes) {
+    lines.push(`- ${RISK[c.risk]} \`${c.route}\` · ${c.viewport}: ${escapeMd(c.description)}`);
+  }
+  if (ai.changes.length) lines.push('');
+  if (ai.risks.length) {
+    lines.push('**Check by hand:**');
+    for (const r of ai.risks) lines.push(`- ${escapeMd(r)}`);
+    lines.push('');
+  }
+  lines.push(`<sub>Written by ${ai.model} from the screenshots. It can be wrong; the checks below are exact.</sub>`, '');
+  return lines;
 }
 
 function headline({ summary }: Report): string {

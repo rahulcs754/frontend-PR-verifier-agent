@@ -42,6 +42,16 @@ Exit code: `0` no new breakages, `1` breakages (or warnings with `--strict`), `2
 
 Run `node dist/cli.js --help` for all options. You can also put options in a JSON file and pass `--config pr-verify.config.json` (see [examples/pr-verify.config.json](examples/pr-verify.config.json)). Flags win over the file.
 
+### Claude review
+
+Set `ANTHROPIC_API_KEY` and Claude looks at the base, preview and diff screenshots of the pages that changed (up to 4, failing pages first). It adds a short review at the top of the PR comment:
+
+- a verdict: looks intended, needs a human look, or looks broken
+- one line per changed page, with a risk level
+- what a reviewer should check by hand
+
+It uses `claude-opus-5-5` by default (`--ai-model` to change it) with server-side fallbacks on. If the call fails, the report still goes out without it. `--no-ai` turns it off.
+
 ### Protected Vercel previews
 
 If your previews use Vercel Deployment Protection, create a "Protection Bypass for Automation" secret in Vercel and set `VERCEL_AUTOMATION_BYPASS_SECRET`. It is sent only to the preview.
@@ -52,8 +62,25 @@ Vercel sends a `deployment_status` event when a preview is ready. Copy [examples
 
 - repo variable `PR_VERIFY_BASE_URL`: your production URL
 - secret `VERCEL_AUTOMATION_BYPASS_SECRET` (only if previews are protected)
+- secret `ANTHROPIC_API_KEY` (optional, for the Claude review)
 
 The action runs the checks, uploads screenshots as a build artifact, and creates or updates a single PR comment.
+
+## GitHub App
+
+Prefer not to add a workflow to every repo? Run PreviewPilot as a GitHub App. It listens for PR and Vercel deployment events, checks the configured routes plus the pages the PR changed, posts the comment, and sets a `PreviewPilot` check run. See [docs/github-app.md](docs/github-app.md).
+
+## Dashboard
+
+`dashboard/` is a Next.js App Router app that lists past runs and shows each one with Claude's review, the issues, and base/preview/diff screenshots side by side. It reads the runs the GitHub App saves. `docker-compose.yml` runs both together. See [dashboard/README.md](dashboard/README.md).
+
+## Dogfooding on this repo
+
+`.github/workflows/preview-pilot.yml` runs PreviewPilot on this repo's own demo app (`examples/demo-app`) every time Vercel reports a ready preview. To turn it on:
+
+1. Create a Vercel project from this repo with root directory `examples/demo-app`, and deploy it to Production once.
+2. Optional secrets: `VERCEL_AUTOMATION_BYPASS_SECRET` (if previews are protected) and `ANTHROPIC_API_KEY` (for the Claude review). Optional variable: `PR_VERIFY_BASE_URL` (otherwise the latest Production deployment is used).
+3. Open a PR that changes the demo app. The workflow comments on it.
 
 ## Development
 
@@ -61,6 +88,7 @@ The action runs the checks, uploads screenshots as a build artifact, and creates
 npm test           # unit tests + a real-browser test against local fixture sites
 npm run typecheck
 npm run verify -- --base ... --preview ...   # run from source with tsx
+npm run seed       # save a demo run from the fixtures, for the dashboard
 ```
 
 Code layout:
@@ -72,11 +100,12 @@ Code layout:
 - `src/compare.ts`: decides which issues are new in the preview
 - `src/verify.ts`: runs base and preview side by side for each route and viewport
 - `src/report.ts`: Markdown PR comment and JSON report
+- `src/summarize.ts`: Claude review of the screenshots
 - `src/cli.ts`: CLI entry point
+- `src/store.ts`: saved runs on disk (shared by the app and dashboard)
+- `src/app/`: GitHub App: webhook server, run flow, routes from changed files, GitHub calls
 
 ## Roadmap
 
-- Claude explains the diff images in plain words and flags what looks like a bug
-- Auto-find routes from the Next.js `app/` folder, and only check routes the PR touched
 - Login support (storage state)
-- Hosted GitHub App and a Next.js dashboard of past runs
+- Dashboard login and run retention
