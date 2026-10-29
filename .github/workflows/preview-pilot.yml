@@ -1,56 +1,103 @@
 # Dogfooding: PreviewPilot checks this repo's own demo app (examples/demo-app)
-# whenever Vercel reports a ready preview. deployment_status workflows run from
-# the default branch, so this starts working once it is merged to main.
+# whenever Vercel reports a ready preview. Both triggers run from the default
+# branch, so changes here only take effect once merged to main.
+#
+# Vercel reports a preview in one of two ways:
+# - a GitHub deployment (deployment_status), when the project creates them
+# - a "Vercel" commit status plus a vercel[bot] PR comment, when it doesn't
 name: PreviewPilot
 
 on:
   deployment_status:
+  status:
 
 permissions:
   contents: read
   pull-requests: write
   deployments: read
+  statuses: read
 
 concurrency:
-  group: preview-pilot-${{ github.event.deployment.sha }}
+  group: preview-pilot-${{ github.event.deployment.sha || github.event.sha }}
   cancel-in-progress: true
 
 jobs:
   verify:
     if: >-
-      github.event.deployment_status.state == 'success' &&
-      github.event.deployment_status.environment_url != '' &&
-      !contains(github.event.deployment.environment, 'Production')
+      (github.event_name == 'deployment_status' &&
+        github.event.deployment_status.state == 'success' &&
+        github.event.deployment_status.environment_url != '' &&
+        !contains(github.event.deployment.environment, 'Production')) ||
+      (github.event_name == 'status' &&
+        github.event.context == 'Vercel' &&
+        github.event.state == 'success')
     runs-on: ubuntu-latest
     steps:
+      - name: Find PR, preview and production URLs
+        id: urls
+        uses: actions/github-script@v7
+        env:
+          CONFIGURED_BASE: ${{ vars.PR_VERIFY_BASE_URL }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.payload.deployment?.sha ?? context.payload.sha;
+            const skip = (why) => { core.info(`Skipping: ${why}`); core.setOutput('skip', 'true'); };
+
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({ owner, repo, commit_sha: sha });
+            const pr = prs.find((p) => p.state === 'open' && p.head.sha === sha);
+            if (!pr) return skip(`no open PR has ${sha} as its head`);
+
+            // Vercel's PR comment starts with "[vc]: #<hash>:<base64 JSON>" listing each project's preview.
+            let project;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: pr.number, per_page: 100 });
+            const vc = comments.find((c) => c.user?.login === 'vercel[bot]' && c.body?.startsWith('[vc]: #'));
+            if (vc) {
+              try {
+                const encoded = vc.body.split('\n')[0].split(':').pop();
+                project = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')).projects?.[0];
+              } catch (err) {
+                core.warning(`Could not read the Vercel comment: ${err.message}`);
+              }
+            }
+
+            const preview = context.payload.deployment_status?.environment_url
+              || (project?.previewUrl && `https://${project.previewUrl}`);
+            if (!preview) return skip('no preview URL in the event or the Vercel PR comment');
+
+            let base = process.env.CONFIGURED_BASE;
+            if (!base) {
+              const { data: deployments } = await github.rest.repos.listDeployments({ owner, repo, environment: 'Production', per_page: 10 });
+              for (const d of deployments) {
+                const { data: statuses } = await github.rest.repos.listDeploymentStatuses({ owner, repo, deployment_id: d.id, per_page: 1 });
+                if (statuses[0]?.state === 'success' && statuses[0].environment_url) {
+                  base = statuses[0].environment_url;
+                  break;
+                }
+              }
+            }
+            // Vercel's default production domain. Set PR_VERIFY_BASE_URL if yours differs.
+            if (!base && project?.name) base = `https://${project.name}.vercel.app`;
+            if (!base) return skip('no production URL. Set the PR_VERIFY_BASE_URL repo variable.');
+
+            core.info(`PR #${pr.number}: ${preview} vs ${base}`);
+            core.setOutput('pr', String(pr.number));
+            core.setOutput('preview', preview);
+            core.setOutput('base', base);
+
       # The checker itself always comes from main, so a PR can't change how it is judged.
-      - uses: actions/checkout@v4
+      - if: steps.urls.outputs.skip != 'true'
+        uses: actions/checkout@v4
         with:
           ref: main
           path: .preview-pilot
 
-      - name: Find production URL
-        id: base
-        uses: actions/github-script@v7
-        env:
-          CONFIGURED: ${{ vars.PR_VERIFY_BASE_URL }}
+      - if: steps.urls.outputs.skip != 'true'
+        uses: ./.preview-pilot
         with:
-          script: |
-            if (process.env.CONFIGURED) return core.setOutput('url', process.env.CONFIGURED);
-            const { owner, repo } = context.repo;
-            const { data: deployments } = await github.rest.repos.listDeployments({ owner, repo, environment: 'Production', per_page: 10 });
-            for (const d of deployments) {
-              const { data: statuses } = await github.rest.repos.listDeploymentStatuses({ owner, repo, deployment_id: d.id, per_page: 1 });
-              if (statuses[0]?.state === 'success' && statuses[0].environment_url) {
-                return core.setOutput('url', statuses[0].environment_url);
-              }
-            }
-            core.setFailed('No production deployment found. Set the PR_VERIFY_BASE_URL repo variable.');
-
-      - uses: ./.preview-pilot
-        with:
-          base-url: ${{ steps.base.outputs.url }}
-          preview-url: ${{ github.event.deployment_status.environment_url }}
+          base-url: ${{ steps.urls.outputs.base }}
+          preview-url: ${{ steps.urls.outputs.preview }}
+          pr-number: ${{ steps.urls.outputs.pr }}
           routes: /,/pricing
           vercel-bypass-secret: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
