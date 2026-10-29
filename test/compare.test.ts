@@ -88,6 +88,28 @@ describe('compareCaptures', () => {
     assert.deepEqual(issues.map((i) => [i.severity, i.kind]), [['fail', 'navigation-error']]);
   });
 
+  it('reports only a redirect when the preview lands on a login wall', () => {
+    const preview = capture(PREVIEW, {
+      finalUrl: 'https://vercel.com/login?next=%2Fsso-api',
+      consoleErrors: ['Provider accounts list is empty'],
+    });
+    const issues = compareCaptures(capture(BASE), preview, undefined, OPTS);
+    assert.deepEqual(issues.map((i) => [i.severity, i.kind]), [['fail', 'redirected']]);
+    assert.match(issues[0]!.message, /VERCEL_AUTOMATION_BYPASS_SECRET/);
+  });
+
+  it('ignores a redirect that stays on the same site, or that base does too', () => {
+    const samesite = capture(PREVIEW, { finalUrl: `${PREVIEW}en` });
+    assert.deepEqual(compareCaptures(capture(BASE), samesite, undefined, OPTS), []);
+    const both = compareCaptures(
+      capture(BASE, { finalUrl: 'https://login.example.org/' }),
+      capture(PREVIEW, { finalUrl: 'https://login.example.org/' }),
+      undefined,
+      OPTS,
+    );
+    assert.deepEqual(both, []);
+  });
+
   it('warns on new console errors, visual change and slow loads', () => {
     const base = capture(BASE, { consoleErrors: ['old'], loadMs: 1000 });
     const preview = capture(PREVIEW, { consoleErrors: ['old', 'new'], loadMs: 2600 });
