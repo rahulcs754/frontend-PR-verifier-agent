@@ -76,10 +76,10 @@ Prefer not to add a workflow to every repo? Run PreviewPilot as a GitHub App. It
 
 ## Dogfooding on this repo
 
-`.github/workflows/preview-pilot.yml` runs PreviewPilot on this repo's own demo app (`examples/demo-app`) every time Vercel reports a ready preview. To turn it on:
+`.github/workflows/preview-pilot.yml` runs PreviewPilot on this repo's own demo app (`examples/demo-app`) every time Vercel reports a ready preview. It starts from a GitHub deployment event or, if Vercel doesn't create GitHub deployments, from Vercel's commit status (the preview URL then comes from Vercel's PR comment). To turn it on:
 
 1. Import this repo into Vercel (no settings needed: the root `vercel.json` builds `examples/demo-app`), and deploy it to Production once.
-2. Optional secrets: `VERCEL_AUTOMATION_BYPASS_SECRET` (if previews are protected) and `ANTHROPIC_API_KEY` (for the Claude review). Optional variable: `PR_VERIFY_BASE_URL` (otherwise the latest Production deployment is used).
+2. Optional secrets: `VERCEL_AUTOMATION_BYPASS_SECRET` (if previews are protected) and `ANTHROPIC_API_KEY` (for the Claude review). Optional variable: `PR_VERIFY_BASE_URL` (otherwise the latest Production deployment, or `https://<project>.vercel.app`, is used).
 3. Open a PR that changes the demo app. The workflow comments on it.
 
 ## Development
