@@ -50,6 +50,8 @@ export interface PageCapture {
   url: string;
   /** Status of the main document, 0 if navigation failed */
   status: number;
+  /** Where the page ended up after redirects, when that differs from url */
+  finalUrl?: string;
   /** Set when the page could not be opened at all */
   navigationError?: string;
   loadMs: number;
@@ -78,6 +80,7 @@ export type Severity = 'fail' | 'warn';
 export type IssueKind =
   | 'http-error'
   | 'navigation-error'
+  | 'redirected'
   | 'js-error'
   | 'broken-image'
   | 'failed-request'
